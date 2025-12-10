@@ -34,7 +34,7 @@ namespace bnj.so_manager.Editor
 
         protected override void OnImGUI()
         {
-            if (GUIUtils.SelectButtonList(ref _selectedType, _typesToDisplay))
+            if (GUIUtils.SelectButtonList(ref _selectedType, _typesToDisplay, position.width))
                 ForceMenuTreeRebuild();
 
             base.OnImGUI();
@@ -368,7 +368,7 @@ namespace bnj.so_manager.Editor
 
             var itemRect = menuItem.Rect;
             var windowPosition = position.position;
-            
+
             // Position directly over the menu item
             var popupPosition = new Vector2(
                 windowPosition.x + itemRect.x,  // Align with left edge of menu item

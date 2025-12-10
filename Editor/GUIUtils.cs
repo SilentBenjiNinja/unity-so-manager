@@ -12,13 +12,29 @@ namespace bnj.so_manager.Editor
     // https://youtu.be/1zu41Ku46xU
     public static class GUIUtils
     {
-        public static bool SelectButtonList(ref Type selectedType, Type[] typesToDisplay)
-        {
-            // TODO: add second row if too many types!
-            var height = Mathf.Clamp(500f / typesToDisplay.Length, 50f, 90f);
-            var rect = GUILayoutUtility.GetRect(0, height);
+        const float MinButtonWidth = 80f; // Minimum width for each button
+        const int MinButtonsPerRow = 1;
+        const int DefaultMaxButtonsPerRow = 8;
 
-            for (int i = 0; i < typesToDisplay.Length; i++)
+        public static bool SelectButtonList(ref Type selectedType, Type[] typesToDisplay, float availableWidth)
+        {
+            var totalTypes = typesToDisplay.Length;
+
+            // Calculate max buttons per row based on available width
+            var maxButtonsPerRow = availableWidth > 0
+                ? Mathf.Max(MinButtonsPerRow, Mathf.FloorToInt(availableWidth / MinButtonWidth))
+                : DefaultMaxButtonsPerRow;
+
+            // Calculate optimal row count and buttons per row for balanced layout
+            var rowCount = Mathf.CeilToInt((float)totalTypes / maxButtonsPerRow);
+            var buttonsPerRow = Mathf.CeilToInt((float)totalTypes / rowCount);
+
+            var buttonHeight = Mathf.Clamp(500f / Mathf.Min(totalTypes, maxButtonsPerRow), 30f, 50f);
+            var totalHeight = buttonHeight * rowCount;
+
+            var fullRect = GUILayoutUtility.GetRect(0, totalHeight);
+
+            for (int i = 0; i < totalTypes; i++)
             {
                 var type = typesToDisplay[i];
 
@@ -30,7 +46,20 @@ namespace bnj.so_manager.Editor
 
                 var icon = firstInstance == null ? EditorIcons.TestInconclusive : (EditorGUIUtility.GetIconForObject(firstInstance) ?? EditorIcons.UnityInfoIcon);
 
-                var buttonRect = rect.Split(i, typesToDisplay.Length);
+                // Calculate which row and column this button is in
+                var row = i / buttonsPerRow;
+                var col = i % buttonsPerRow;
+                var buttonsInThisRow = Mathf.Min(buttonsPerRow, totalTypes - (row * buttonsPerRow));
+
+                // Calculate the rect for this button
+                var rowRect = new Rect(
+                    fullRect.x,
+                    fullRect.y + (row * buttonHeight),
+                    fullRect.width,
+                    buttonHeight
+                );
+
+                var buttonRect = rowRect.Split(col, buttonsInThisRow);
                 var isSelected = type == selectedType;
 
                 if (SelectButton(buttonRect, new() { image = icon, tooltip = name }, isSelected))
