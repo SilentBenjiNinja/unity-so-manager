@@ -13,8 +13,8 @@ using UnityEngine;
 namespace bnj.so_manager.Editor
 {
     // TODO:
-    // Button for renaming objects (https://docs.unity3d.com/6000.0/Documentation/ScriptReference/AssetDatabase.RenameAsset.html)
     // Change name from data manager? (e.g. SO Manager)
+    // BUG: Rename popup appears in different places depending on where it is called from
 
     // Credit to Sirenix Tutorial:
     // https://youtu.be/1zu41Ku46xU
@@ -104,17 +104,13 @@ namespace bnj.so_manager.Editor
             menuItem.OnDrawItem += (item) =>
             {
                 // If this folder item is selected, deselect it
-                if (item.IsSelected)
-                {
-                    // Find the first actual asset to select instead
-                    var firstAsset = MenuTree.EnumerateTree()
-                        .FirstOrDefault(x => x.Value is UnityEngine.Object);
+                if (!item.IsSelected) return;
 
-                    if (firstAsset != null)
-                    {
-                        firstAsset.Select(false);
-                    }
-                }
+                // Find the first actual asset to select instead
+                var firstAsset = MenuTree.EnumerateTree()
+                    .FirstOrDefault(x => x.Value is UnityEngine.Object);
+
+                firstAsset?.Select(false);
             };
         }
 
@@ -130,9 +126,9 @@ namespace bnj.so_manager.Editor
                 menu.AddItem(new GUIContent("Create New (N)"), false, () => CreateNewAssetOfType(item));
                 menu.AddItem(new GUIContent("Duplicate (Ctrl+D)"), false, () => DuplicateAsset(item));
                 menu.AddSeparator("");
-                menu.AddItem(new GUIContent("Rename (F2)"), false, () => StartRename(item));
+                menu.AddItem(new GUIContent("Rename... (F2)"), false, () => StartRename(item));
                 menu.AddItem(new GUIContent("Delete (Del)"), false, () => DeleteAsset(item));
-                menu.AddItem(new GUIContent("Select (F)"), false, () => PingAsset(item));
+                menu.AddItem(new GUIContent("Select in Project Window (F)"), false, () => PingAsset(item));
 
                 menu.ShowAsContext();
             };
@@ -184,11 +180,8 @@ namespace bnj.so_manager.Editor
             }
 
             // Clean up multi-select tree when switching to single selection
-            if (_multiSelectPropertyTree != null)
-            {
-                _multiSelectPropertyTree.Dispose();
-                _multiSelectPropertyTree = null;
-            }
+            _multiSelectPropertyTree?.Dispose();
+            _multiSelectPropertyTree = null;
 
             // Only call base for single selection
             base.DrawEditors();
@@ -205,11 +198,8 @@ namespace bnj.so_manager.Editor
             base.OnDestroy();
 
             // Clean up the property tree when window closes
-            if (_multiSelectPropertyTree != null)
-            {
-                _multiSelectPropertyTree.Dispose();
-                _multiSelectPropertyTree = null;
-            }
+            _multiSelectPropertyTree?.Dispose();
+            _multiSelectPropertyTree = null;
         }
 
         void HandleKeyboardShortcuts()
@@ -292,7 +282,7 @@ namespace bnj.so_manager.Editor
             }
 
             // Create the ScriptableObject instance
-            var newAsset = ScriptableObject.CreateInstance(assetType);
+            var newAsset = CreateInstance(assetType);
             AssetDatabase.CreateAsset(newAsset, relativePath);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -366,26 +356,55 @@ namespace bnj.so_manager.Editor
             return $"{nameWithoutNumber} ({counter})";
         }
 
-        void StartRename(OdinMenuItem menuItem)
+        void StartRename(OdinMenuItem menuItem, Vector2? screenPosition = null)
         {
-            if (menuItem.Value is not UnityEngine.Object asset) return;
+            if (menuItem?.Value is not UnityEngine.Object asset) return;
 
             var assetPath = AssetDatabase.GetAssetPath(asset);
+            if (string.IsNullOrEmpty(assetPath)) return;
+
             var currentName = Path.GetFileNameWithoutExtension(assetPath);
             var directory = Path.GetDirectoryName(assetPath);
 
-            // Alternative: Use a simpler approach with EditorInputDialog from Odin
-            // This creates an inline text field in a popup window
-            var renamePopup = new RenamePopup { AssetName = currentName };
-            var result = InspectObjectInDropDown(
-                renamePopup,
-                300
+            var itemRect = menuItem.Rect;
+            var windowPosition = position.position;
+            
+            // Position directly over the menu item
+            var popupPosition = new Vector2(
+                windowPosition.x + itemRect.x,  // Align with left edge of menu item
+                windowPosition.y + itemRect.y + 20  // Align with top of menu item + title bar
             );
 
-            if (result != null && !string.IsNullOrWhiteSpace(renamePopup.AssetName) && renamePopup.AssetName != currentName)
+            // Delay the popup creation to avoid conflicts with context menu closing
+            EditorApplication.delayCall += () =>
             {
-                PerformRename(assetPath, directory, renamePopup.AssetName);
-            }
+                var content = new RenamePopup(currentName, (newName, shouldClose) =>
+                {
+                    if (string.IsNullOrWhiteSpace(newName) || newName == currentName)
+                    {
+                        shouldClose();
+                        return;
+                    }
+
+                    // Close the popup first, THEN check for errors
+                    shouldClose();
+
+                    // Defer the actual rename to avoid GUI errors
+                    EditorApplication.delayCall += () =>
+                    {
+                        PerformRename(assetPath, directory, newName);
+                    };
+                });
+
+                // Position the window directly over the menu item
+                var window = InspectObjectInDropDown(
+                    content,
+                    popupPosition,
+                    300
+                );
+
+                window?.Focus();
+            };
         }
 
         void PerformRename(string assetPath, string directory, string newName)
@@ -395,14 +414,12 @@ namespace bnj.so_manager.Editor
             // Check if target already exists
             if (AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(newPath) != null)
             {
-                if (!EditorUtility.DisplayDialog(
+                EditorUtility.DisplayDialog(
                     "File Exists",
                     $"An asset named '{newName}' already exists in this location. Rename cancelled.",
-                    "OK"))
-                {
-                    return;
-                }
-                return;
+                    "OK");
+
+                return; // Exit early - don't proceed with rename
             }
 
             var errorMessage = AssetDatabase.RenameAsset(assetPath, newName);
@@ -410,13 +427,12 @@ namespace bnj.so_manager.Editor
             if (!string.IsNullOrEmpty(errorMessage))
             {
                 Debug.LogError($"Failed to rename asset: {errorMessage}");
+                return;
             }
-            else
-            {
-                AssetDatabase.SaveAssets();
-                AssetDatabase.Refresh();
-                ForceMenuTreeRebuild();
-            }
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            ForceMenuTreeRebuild();
         }
 
         void DeleteAsset(OdinMenuItem menuItem)
@@ -474,8 +490,65 @@ namespace bnj.so_manager.Editor
         // Helper class for rename popup
         class RenamePopup
         {
-            [HideLabel]
-            public string AssetName;
+            [HideInInspector] public string assetName;
+            private Action<string, Action> _onConfirm;
+            private bool _hasFocused;
+            private bool _shouldClose;
+
+            public RenamePopup(string initialName, Action<string, Action> onConfirm)
+            {
+                assetName = initialName;
+                _onConfirm = onConfirm;
+            }
+
+            [OnInspectorGUI]
+            void DrawTextField()
+            {
+                var currentEvent = Event.current;
+
+                // Handle closing at the start, before drawing anything
+                if (_shouldClose)
+                {
+                    if (currentEvent.type == EventType.Layout)
+                    {
+                        EditorApplication.delayCall += () =>
+                        {
+                            var window = EditorWindow.focusedWindow;
+                            if (window != null && window.GetType().Name.Contains("OdinEditorWindow"))
+                            {
+                                window.Close();
+                            }
+                        };
+                    }
+                    return; // Don't draw anything if we're closing
+                }
+
+                GUI.SetNextControlName("RenameField");
+
+                // Auto-focus on first draw
+                if (currentEvent.type == EventType.Repaint && !_hasFocused)
+                {
+                    _hasFocused = true;
+                    EditorGUI.FocusTextInControl("RenameField");
+                }
+
+                assetName = EditorGUILayout.TextField(assetName);
+
+                // Handle Enter key
+                if (currentEvent.type == EventType.KeyDown &&
+                    (currentEvent.keyCode == KeyCode.Return || currentEvent.keyCode == KeyCode.KeypadEnter))
+                {
+                    currentEvent.Use();
+                    _onConfirm?.Invoke(assetName, () => _shouldClose = true);
+                }
+
+                // Handle Escape key
+                if (currentEvent.type == EventType.KeyDown && currentEvent.keyCode == KeyCode.Escape)
+                {
+                    currentEvent.Use();
+                    _shouldClose = true;
+                }
+            }
         }
     }
 }
