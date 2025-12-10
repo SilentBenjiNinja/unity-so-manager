@@ -1,0 +1,11 @@
+{
+  "name": "com.bnj.so-manager",
+  "version": "1.0.0",
+  "displayName": "BNJ SO Manager",
+  "description": "This is the lovely description to this very useful package. Keep in mind it requires Odin to run!",
+  "unity": "2020.3",
+  "author": {
+    "name": "SilentBenjiNinja",
+    "email": "silentbenjininja@github.com"
+  }
+}
