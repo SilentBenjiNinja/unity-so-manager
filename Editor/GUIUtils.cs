@@ -12,7 +12,7 @@ namespace bnj.so_manager.Editor
     // https://youtu.be/1zu41Ku46xU
     public static class GUIUtils
     {
-        const float MinButtonWidth = 80f; // Minimum width for each button
+        const float MinButtonWidth = 50f;
         const int MinButtonsPerRow = 1;
         const int DefaultMaxButtonsPerRow = 8;
 
