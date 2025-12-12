@@ -18,7 +18,7 @@ namespace bnj.so_manager.Editor
 
     // Credit to Sirenix Tutorial:
     // https://youtu.be/1zu41Ku46xU
-    public class DataManager : OdinMenuEditorWindow
+    public class SO_Manager : OdinMenuEditorWindow
     {
         static readonly Type[] _typesToDisplay =
             TypeCache.GetTypesWithAttribute<ManageableDataAttribute>()
@@ -29,8 +29,8 @@ namespace bnj.so_manager.Editor
 
         PropertyTree _multiSelectPropertyTree;
 
-        [MenuItem("BNJ/Data Manager")]
-        static void OpenWindow() => GetWindow<DataManager>().Show();
+        [MenuItem("BNJ/SO Manager")]
+        static void OpenWindow() => GetWindow<SO_Manager>().Show();
 
         protected override void OnImGUI()
         {

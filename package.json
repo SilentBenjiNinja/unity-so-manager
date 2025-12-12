@@ -1,6 +1,6 @@
 {
   "name": "com.bnj.so-manager",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "displayName": "BNJ - Scriptable Object Manager",
   "description": "- Uses Sirenix Odin Inspector plugin!\n- Adds an attribute [ManageableData] which makes scriptable objects editable in a dedicated Odin window\n- Based on a video tutorial by Sirenix (see README for further reference)",
   "unity": "2020.3",
