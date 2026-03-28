@@ -10,12 +10,23 @@ namespace bnj.so_manager.Editor
 {
     // Credit to Sirenix Tutorial:
     // https://youtu.be/1zu41Ku46xU
+
+    /// <summary>
+    /// Shared GUI helpers for the SO Manager Editor window.
+    /// </summary>
     public static class GUIUtils
     {
         const float MinButtonWidth = 50f;
         const int MinButtonsPerRow = 1;
         const int DefaultMaxButtonsPerRow = 8;
 
+        /// <summary>
+        /// Draws a responsive row of icon+label tab buttons, one per type.
+        /// Updates <paramref name="selectedType"/> and returns <see langword="true"/> when the selection changes.
+        /// </summary>
+        /// <param name="selectedType">Currently selected type; updated on click.</param>
+        /// <param name="typesToDisplay">Ordered array of types to render as buttons.</param>
+        /// <param name="availableWidth">Available horizontal space used to calculate buttons per row.</param>
         public static bool SelectButtonList(ref Type selectedType, Type[] typesToDisplay, float availableWidth)
         {
             var totalTypes = typesToDisplay.Length;

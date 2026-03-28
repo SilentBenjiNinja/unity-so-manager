@@ -1,8 +1,8 @@
 {
   "name": "com.bnj.so-manager",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "displayName": "BNJ - Scriptable Object Manager",
-  "description": "* Uses Sirenix Odin Inspector\n* Adds an attribute [ManageableData] which makes scriptable objects editable in a dedicated Odin window\n* Based on a video tutorial by Sirenix (see README for further reference)",
+  "description": "Editor window for browsing, creating, duplicating, renaming, and deleting ScriptableObject assets. Tag any ScriptableObject class with [ManageableData] to register it as a managed type. Requires Odin Inspector. Automatically defines the SO_MANAGER scripting define symbol on import, allowing other packages to use [ManageableData] optionally without a hard dependency.",
   "unity": "2020.3",
   "author": {
     "name": "SilentBenjiNinja",

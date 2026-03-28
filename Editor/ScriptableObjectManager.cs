@@ -19,6 +19,12 @@ namespace bnj.so_manager.Editor
 
     // Credit to Sirenix Tutorial:
     // https://youtu.be/1zu41Ku46xU
+    /// <summary>
+    /// Editor window for browsing, creating, duplicating, renaming, and deleting
+    /// <see cref="UnityEngine.ScriptableObject"/> assets marked with <see cref="ManageableDataAttribute"/>.
+    /// Open via <c>BNJ &gt; SO Manager</c> in the menu bar.
+    /// Assets must be stored under <c>Assets/ScriptableObjects/</c> to appear in the window.
+    /// </summary>
     public class ScriptableObjectManager : OdinMenuEditorWindow
     {
         static readonly Type[] _typesToDisplay =
