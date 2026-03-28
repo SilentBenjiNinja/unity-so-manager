@@ -13,7 +13,6 @@ using UnityEngine;
 namespace bnj.so_manager.Editor
 {
     // TODO:
-    // Change name from data manager? (e.g. SO Manager)
     // BUG: Rename popup appears in different places depending on where it is called from
     // Change shortcuts to not interfere with text input fields (add Ctrl/Alt or find a way to detect focus)
     // BUG: Sometimes complains about not properly ending/closing ImGUI groups
