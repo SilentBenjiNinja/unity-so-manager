@@ -1,3 +1,11 @@
+# 1.2.1
+
+### Fixes
+
+* Fixed intermittent ImGUI `BeginGroup`/`EndGroup` error caused by modifying tree selection mid-draw in folder deselection logic
+
+---
+
 # 1.2.0
 
 ### Improvements

@@ -16,6 +16,8 @@ namespace bnj.so_manager.Editor
     // BUG: Rename popup appears in different places depending on where it is called from
     // Change shortcuts to not interfere with text input fields (add Ctrl/Alt or find a way to detect focus)
     // BUG: Sometimes complains about not properly ending/closing ImGUI groups
+    // NOTE: If the above persists, investigate DrawEditors() — the early return during
+    // multi-select skips base.DrawEditors(), which could miss internal GUI group cleanup
 
     // Credit to Sirenix Tutorial:
     // https://youtu.be/1zu41Ku46xU
@@ -113,11 +115,15 @@ namespace bnj.so_manager.Editor
                 // If this folder item is selected, deselect it
                 if (!item.IsSelected) return;
 
-                // Find the first actual asset to select instead
-                var firstAsset = MenuTree.EnumerateTree()
-                    .FirstOrDefault(x => x.Value is UnityEngine.Object);
+                // Defer selection change to avoid modifying tree state mid-draw,
+                // which can break ImGUI BeginGroup/EndGroup pairing
+                EditorApplication.delayCall += () =>
+                {
+                    var firstAsset = MenuTree?.EnumerateTree()
+                        .FirstOrDefault(x => x.Value is UnityEngine.Object);
 
-                firstAsset?.Select(false);
+                    firstAsset?.Select(false);
+                };
             };
         }
 
