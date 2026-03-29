@@ -14,13 +14,16 @@ namespace bnj.so_manager.Editor
 {
     // TODO:
     // BUG: Rename popup appears in different places depending on where it is called from
-    // Change shortcuts to not interfere with text input fields (add Ctrl/Alt or find a way to detect focus)
-    // BUG: Sometimes complains about not properly ending/closing ImGUI groups
-    // NOTE: If the above persists, investigate DrawEditors() — the early return during
-    // multi-select skips base.DrawEditors(), which could miss internal GUI group cleanup
+    // BUG: ImGUI group errors ("EndLayoutGroup: BeginLayoutGroup must be called first") appear
+    // when the SaveFilePanel from CreateNewAssetOfType closes (N shortcut, not right-click).
+    // The button bar in OnImGUI runs before base.OnImGUI() which opens layout groups — this may
+    // cause a layout/repaint mismatch. Moving it to DrawMenu() fixes the error but constrains
+    // the buttons to the menu panel width. DrawEditors() early return during multi-select is
+    // another possible contributor.
 
     // Credit to Sirenix Tutorial:
     // https://youtu.be/1zu41Ku46xU
+    
     /// <summary>
     /// Editor window for browsing, creating, duplicating, renaming, and deleting
     /// <see cref="UnityEngine.ScriptableObject"/> assets marked with <see cref="ManageableDataAttribute"/>.
@@ -219,8 +222,9 @@ namespace bnj.so_manager.Editor
         {
             var currentEvent = Event.current;
 
-            // Handle keyboard shortcuts only when this window is focused
+            // Handle keyboard shortcuts only when this window is focused and no text field is active
             if (currentEvent.type != EventType.KeyDown) return;
+            if (EditorGUIUtility.editingTextField) return;
 
             var selected = MenuTree?.Selection?.FirstOrDefault();
             if (selected?.Value == null) return;
