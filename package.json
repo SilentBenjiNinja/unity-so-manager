@@ -1,6 +1,6 @@
 {
   "name": "com.bnj.so-manager",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "displayName": "BNJ - Scriptable Object Manager",
   "description": "Editor window for browsing, creating, duplicating, renaming, and deleting ScriptableObject assets. Tag any ScriptableObject class with [ManageableData] to register it as a managed type. Requires Odin Inspector. Automatically defines the SO_MANAGER scripting define symbol on import, allowing other packages to use [ManageableData] optionally without a hard dependency.",
   "unity": "2020.3",
